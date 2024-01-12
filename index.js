@@ -9,7 +9,11 @@ app.get('/', (req, res) => {
     console.log('Server 3 has been pinged')
     return res.status(200).json({ message: 'The server is running' });
 });
-const fetchLighthouseReport = async (url, apiKey, progressBar, Queue) => {
+
+
+app.post('/audit', async (req, res) => {
+    const { urls } = req.body;
+    const fetchLighthouseReport = async (url, apiKey, progressBar, Queue) => {
     const apiEndpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo&key=${apiKey}`;
     try {
         const response = await axios.get(apiEndpoint);
@@ -84,9 +88,6 @@ const main_3 = async (realUrls) => {
     }
 };
 
-
-app.post('/audit', async (req, res) => {
-    const { urls } = req.body;
 
     if (!urls) {
         return res.status(400).json({ error: 'Invalid request. Please provide an array of URLs.' });
