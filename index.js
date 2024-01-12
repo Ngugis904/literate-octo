@@ -104,6 +104,4 @@ const main_3 = async (realUrls) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-});
+
