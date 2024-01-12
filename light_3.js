@@ -55,7 +55,7 @@ const fetchLighthouseReports = async (urls, apiKey, Queue) => {
 
     progressBar.start(totalRequests, 0);
 
-    const queue = new Queue({ concurrency: 20 });
+    const queue = new Queue({ concurrency: 25 });
 
     const reportPromises = validUrls.map(url => queue.add(() => fetchLighthouseReport(url, apiKey, progressBar, Queue)));
 
