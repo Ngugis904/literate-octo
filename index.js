@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const {main_3} = require('./light_3');
 const app = express();
 const axios = 'axios'
 const port = 3000;
@@ -57,7 +56,7 @@ const fetchLighthouseReports = async (urls, apiKey, Queue) => {
 
     const validUrls = urls.filter(url => url.startsWith('http://') || url.startsWith('https://'));
 
-    const queue = new Queue({ concurrency: 30 });
+    const queue = new Queue({ concurrency: 25 });
 
     const reportPromises = validUrls.map(url => queue.add(() => fetchLighthouseReport(url, apiKey, progressBar, Queue)));
 
