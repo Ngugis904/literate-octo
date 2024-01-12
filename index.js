@@ -103,8 +103,6 @@ const main_3 = async (realUrls) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-});
+app.listen(app.listen(process.env.PORT || 3000));
 
 
