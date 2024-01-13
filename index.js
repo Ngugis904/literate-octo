@@ -2,19 +2,45 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const axios = require('axios')
-const port = 3000;
+// const port = 3000;
 
 app.use(bodyParser.json());
-app.get('/', (req, res) => {
-    console.log('Server 3 has been pinged')
-    return res.status(200).json({ message: 'The server is running' });
-});
+const fetchLighthouseReports = async (urls, apiKey, Queue) => {
+    const start = performance.now();
 
+    const validUrls = urls.filter(url => url.startsWith('http://') || url.startsWith('https://'));
 
-app.post('/audit', async (req, res) => {
-    const { urls } = req.body;
-    const fetchLighthouseReport = async (url, apiKey, progressBar, Queue) => {
-    const apiEndpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo&key=${apiKey}`;
+    const queue = new Queue({ concurrency: 25 });
+
+    const reportPromises = validUrls.map(url => queue.add(() => fetchLighthouseReport(url, apiKey, Queue)));
+
+    const reports = await Promise.allSettled(reportPromises);
+
+    const fulfilledReports = reports.filter(result => result.status === 'fulfilled').map(result => result.value);
+
+    const end = performance.now();
+    const totalTime = end - start;
+    console.log(`Total time taken: ${totalTime} milliseconds`);
+
+    return fulfilledReports;
+    };
+
+const main_3 = async (realUrls) => {
+    const apiKey = 'AIzaSyAvlxYIxMW_JCLjthR7ue23kekVgVPyQQI';
+    console.log(`The real URLS are ${realUrls}`)
+    const Queue = await import('p-queue');
+
+    try {
+
+        const lighthouseReports = await fetchLighthouseReports(realUrls, apiKey, Queue.default);        
+        return lighthouseReports
+        // console.log('All Lighthouse reports have been saved in lighthouse_reports.json', lighthouseReports);
+    } catch (error) {
+        console.error('Error in main function:', error);
+    }
+};
+const fetchLighthouseReport = async (url, apiKey) => {
+    const apiEndpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo`;
     try {
         const response = await axios.get(apiEndpoint);
         const data = response.data;
@@ -54,47 +80,22 @@ app.post('/audit', async (req, res) => {
         console.error(`Error fetching Lighthouse report for  light_3 at ${url}:`, error.message);
     }
 };
+app.get('/', (req, res) => {
+    console.log('Server 3 has been pinged')
+    return res.status(200).json({ message: 'The server is running' });
+});
 
-const fetchLighthouseReports = async (urls, apiKey, Queue) => {
-    const start = performance.now();
 
-    const validUrls = urls.filter(url => url.startsWith('http://') || url.startsWith('https://'));
-
-    const queue = new Queue({ concurrency: 25 });
-
-    const reportPromises = validUrls.map(url => queue.add(() => fetchLighthouseReport(url, apiKey, progressBar, Queue)));
-
-    const reports = await Promise.allSettled(reportPromises);
-
-    const fulfilledReports = reports.filter(result => result.status === 'fulfilled').map(result => result.value);
-
-    const end = performance.now();
-    const totalTime = end - start;
-    console.log(`Total time taken: ${totalTime} milliseconds`);
-
-    return fulfilledReports;
-};
-
-const main_3 = async (realUrls) => {
-    const apiKey = 'AIzaSyAvlxYIxMW_JCLjthR7ue23kekVgVPyQQI';
-
-    try {
-        const Queue = await import('p-queue');
-        const lighthouseReports = await fetchLighthouseReports(realUrls, apiKey, Queue.default);        
-        return lighthouseReports
-        // console.log('All Lighthouse reports have been saved in lighthouse_reports.json', lighthouseReports);
-    } catch (error) {
-        console.error('Error in main function:', error);
-    }
-};
-
+app.post('/audit', async (req, res) => {
+    const { urls } = req.body;
+    
 
     if (!urls) {
         return res.status(400).json({ error: 'Invalid request. Please provide an array of URLs.' });
     }
 
     try {
-        // const Queue = await import('p-queue');
+        const Queue = await import('p-queue');
         const lighthouseReports = await main_3(urls);
         console.log(lighthouseReports)
         res.json( lighthouseReports );
@@ -103,6 +104,7 @@ const main_3 = async (realUrls) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.listen(app.listen(process.env.PORT || 3000));
 
-
+app.listen(process.env.PORT || 3000, () => {
+    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+});
